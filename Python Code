@@ -1,1 +1,151 @@
-# teamitank
+# MainCode.py
+
+# This Python code will....
+#
+# The code will initiate by gathering the raw data from the three sensor types
+# The Raw data from all Three sensor types will be then filtered to determine proper Digital Output or Error Statment
+# The digital outputs, and status will then be sent to Dweet.io to be diplayed on Freeboard.io
+
+# Including initial libraries
+
+import time
+import dweepy
+	#Enable Raspberry Pi GPIO
+import RPi.GPIO as GPIO
+GPIO.setmode(GPIO.BOARD)
+GPIO.setup(40, GPIO.IN)
+GPIO.setup(38, GPIO.IN)
+GPIO.setup(36, GPIO.IN)
+
+
+#*******************************
+#*         Variables           *
+#*******************************
+
+# Water Tank Levels in Inches
+high_level = 40
+medium_level = 20
+low_level = 3
+
+#*******************************
+#*        Code functions       *
+#*******************************
+
+def SendDweet(data):  # yes I am 100% aware this function will not acually be called just use the line below
+	dweepy.dweet_for(sensor_name,{'data':round(data,2)})  # This line of code will be used to send a dweet to be picked up by freeboard.io
+
+def fetchtemp():  # This function will fetch the tempurature from the DS18
+	lkjasfdjlafsdljkafd
+
+	return tempurature
+
+def fetchlevelpressure(): # This function will read the A/D and return the waterlevel in Inches
+	dfdfdsf
+
+	return pressure_level
+
+def fetchlevelAquaplumb(): # This function will read the A/D and return the waterlevel in Inches
+	lkjasfdjlafsdljkafd
+
+	return plumb_level
+
+
+def fetchlevelfloat():
+	# initialize values to false
+	High = False
+	Medium = False
+	Low = False
+	
+	if GPIO.input(40): # Check High Float
+		High = True
+
+	if GPIO.input(38): # Check Medium Float
+		Medium = True
+
+	if GPIO.input(36): # Check Low Float
+		Low = True
+	
+	#Process data and prep output/Find Errors
+	if(not Low and not Medium and not High)   # Empty
+		float_status = 0
+	elif(not Low and not Medium and High)     # Error: High Float Asserted Only
+		float_status = 1
+	elif(not Low and Medium and not High)     # Error: Med Float Asserted Only
+		float_status = 2
+	elif(not Low and Medium and High)         # Error: Low Sensor Bad
+		float_status = 3
+	elif(Low and not Medium and not High)     # Low 
+		float_status = 4
+	elif(Low and not Medium and High)         # Error: Medium Float Bad
+		float_status = 5
+	elif(Low and Medium and not High)         # Medium
+		float_status = 6
+	elif(Low and Medium and High)             # High 
+		float_status = 7
+
+	return float_status
+
+# while True: creates an infinate while loop to run while the Pi is on
+
+while True:
+
+	# Fetch Water Levels
+	float_level = fetchlevelfloat()
+	pressure_level = fetchlevelpressure()
+	plumb_level = fetchlevelAquaplumb()
+
+	# Check if Continuous sensors agree
+	cont_difference = pressure_level - plumb_level
+
+	if cont_difference < 0:
+		cont_difference = cont_difference * -1
+
+	if cont_difference < 2: # Continuous sensors dissagree
+	
+
+
+
+	#Implment Logic for voting scheme to determine digital outputs/Error Statements
+	if(float_level == 0 and pressure_level <= Low + 1 and plumb_level <= Low + 1):    # This is the senario when the voting scheme would agree to leave all 3 digitals high
+
+	elif(float_level == 4 and Low - 1 <= pressure_level <= Medium and Low - 1 <= pressure_level <= Medium) # This is the senario when the voting scheme would agree to send "Low" to the pump controller
+
+
+
+
+
+
+	# Fetch Tempurature and Display it freeboard.io site: 
+	tempurature = fetchtemp()
+	dweepy.dweet_for(sensor_name,{'tempurature':round(data,2)})
+
+
+	time.sleep(3)  #This line will delay the code for 3 seconds
+
+
+
+
+#********************
+#*      Notes       *
+#********************
+"""
+In order to set ports to an input or output
+GPIO.setup(Port#, GPIO.IN)  // input
+GPIO.setup(Port#, GPIO.OUT) // output
+In this senerio BOARD is selected so the port #'s
+will match the Port # on the Pi
+
+In order to Read the Value of an input 
+GPIO.input(port#)
+
+In order to set the output state of a GPIO pin:
+GPIO.output(Port#, state)  // were state can be 0 / 1 / False / True / GPIO.LOW / GPIO.HIGH
+
+
+
+
+
+
+
+"""
+

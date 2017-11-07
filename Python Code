@@ -41,20 +41,19 @@ def SendDweet(data):  # yes I am 100% aware this function will not acually be ca
 	dweepy.dweet_for(sensor_name,{'data':round(data,2)})  # This line of code will be used to send a dweet to be picked up by freeboard.io
 
 def fetchtemp():  # This function will fetch the tempurature from the DS18
-	lkjasfdjlafsdljkafd
+	
 
 	return tempurature
 
 def fetchlevelpressure(): # This function will read the A/D and return the waterlevel in Inches
-	dfdfdsf
+	
 
 	return pressure_level
 
 def fetchlevelAquaplumb(): # This function will read the A/D and return the waterlevel in Inches
-	lkjasfdjlafsdljkafd
+	
 
 	return plumb_level
-
 
 def fetchlevelfloat():
 	# initialize values to false
@@ -91,7 +90,6 @@ def fetchlevelfloat():
 	else:
 		pass
 
-
 	return float_status
 
 
@@ -106,47 +104,150 @@ while True:		# while True: creates an infinate while loop to run while the Pi is
 	pressure_level = fetchlevelpressure()
 	plumb_level = fetchlevelAquaplumb()
 
-	if((float_level == 1 ) or (float_level == 2 ) or (float_level == 3 ) or (float_level == 5 )):   # Error Condition in Float Sensors
-		print("Sensor Error: Float Sensor Failure")
-		print("Please in inspect Floats")
-		# Possible break the Loop and wait for maintance.
-	else:  # No Error Condition in Float Sensors
-		cont_difference = abs(pressure_level - float_level)	# Check Continuous level floats for Error
-		if(cont_difference > continuous_level_tolerance): # Error in Continuous Sensors --- tolerance currently set to 2"
-			# Implement Logic to figure out what continuous sensor failed
-			find_continuous_failure(): # to be implemented later
-			if cont_error = 0:   # Aquaplumb error
-				print("Sensor Error: AquaPlumb Continuous Sensor Failure")
-			else: # Pressure Sensor Error
-				print("Sensor Error: Pressure Based Continuous Sensor Failure")
-		else:
-			continuous_level = (pressure_level + plumb_level)/2 # if the continuous sensors agree then an Average of the two will be used in the voting scheme
-			pass # Move on with logic cause nothing is bad
 
-	#Implment Logic to determine the digital outputs ASSUMING NO ERRORS
-	if(float_level == 0 and pressure_level <= Low + 1 and plumb_level <= Low + 1):	# Output "Empty" to pump controller
-		GPIO.output(11, True)
-		GPIO.output(13, True)
-		GPIO.output(15, True)
-	elif(float_level == 4 and low_level - 1 <= pressure_level <= medium_level + 1 and low_level - 1 <= plumb_level <= medium_level + 1):  # Output "Low" to pump controller
-		GPIO.output(11, False)
-		GPIO.output(13, True)
-		GPIO.output(15, True)
-	elif(float_level == 6 and medium_level - 1 <= pressure_level <= high_level and low_level - 1 <= plumb_level <= medium_level):  # Output "Med" to pump controller
-		GPIO.output(11, False)
-		GPIO.output(13, False)
-		GPIO.output(15, True)
-	elif(float_level == 7 and pressure_level >= high_level - 1 and plumb_level >= high_level):  # Output "High" to pump controller
-		GPIO.output(11, False)
-		GPIO.output(13, False)
-		GPIO.output(15, False)
-	else:
-		pass
+	cont_difference = abs(pressure_level - float_level)	# Check Continuous level floats for Error
+	if(cont_difference > continuous_level_tolerance): # Error in Continuous Sensors --- tolerance currently set to 2"
+		# Implement Logic to figure out what continuous sensor failed
+		if((float_level == 1 ) or (float_level == 2 ) or (float_level == 3 ) or (float_level == 5 )):   # Error Condition in Float Sensors
+			print("Sensor Error: Float & Continuous Sensor Failure")
+			print("Please in inspect Sensor Stack")
+			# SHUT DOWN CODE
+			GPIO.output(11, True)
+			GPIO.output(13, False)
+			GPIO.output(15, True)
+			#while True:   # This while loop would potentially lock up the system until george reboots the pi / power cycles unit
+			#	time.sleep(10)
+			#
 
-	
-	continuous_level = (pressure_level + plumb_level)/2 # if the continuous sensors agree then an Average of the two will be used in the voting scheme
+		else: # No Error in Float Sensors >>> Deside what type of continuous sensor is bad 
+			# Check based on floats values 0, 4, 6, 7
+			if(float_level == 0):  # Float = Empty
+				if(pressure_level <= low_level and plumb_level <= low_level) # all three sensors agree, continuous failure not found. 
+					GPIO.output(11, True)
+					GPIO.output(13, True)
+					GPIO.output(15, True)
+				elif(pressure_level <= low_level): # Pressure Level Sensor agrees >>> Aquaplumb Error
+					print("Sensor Error: Aquaplumb Sensor Failure")
+					GPIO.output(11, True)
+					GPIO.output(13, True)
+					GPIO.output(15, True)					
+				elif(plumb_level <= low_level): # Aquaplumb Sensor agrees >>> Pressure Error
+					print("Sensor Error: Pressure Sensor Failure")
+					GPIO.output(11, True)
+					GPIO.output(13, True)
+					GPIO.output(15, True)
+				else: 
+					pass
 
-	# Fetch Tempurature and Display it freeboard.io site: 
+			elif(float_level == 4): # Float = Low
+				if(low_level <= pressure_level <= medium_level and low_level <= plumb_level <= medium_level) # all three sensors agree, continuous failure not found. 
+					GPIO.output(11, False)
+					GPIO.output(13, True)
+					GPIO.output(15, True)
+				elif(low_level <= pressure_level <= medium_level): # Pressure Level Sensor agrees >>> Aquaplumb Error
+					print("Sensor Error: Aquaplumb Sensor Failure")
+					GPIO.output(11, False)
+					GPIO.output(13, True)
+					GPIO.output(15, True)					
+				elif(low_level <= plumb_level <= medium_level): # Aquaplumb Sensor agrees >>> Pressure Error
+					print("Sensor Error: Pressure Sensor Failure")
+					GPIO.output(11, False)
+					GPIO.output(13, True)
+					GPIO.output(15, True)
+				else: 
+					pass
+
+			elif(float_level == 6): # Float = Med
+				if(medium_level <= pressure_level <= high_level and medium_level <= plumb_level <= high_level) # all three sensors agree, continuous failure not found. 
+					GPIO.output(11, False)
+					GPIO.output(13, False)
+					GPIO.output(15, True)
+				elif(medium_level <= pressure_level <= high_level): # Pressure Level Sensor agrees >>> Aquaplumb Error
+					print("Sensor Error: Aquaplumb Sensor Failure")
+					GPIO.output(11, False)
+					GPIO.output(13, False)
+					GPIO.output(15, True)
+				elif(medium_level <= plumb_level <= high_level): # Aquaplumb Sensor agrees >>> Pressure Error
+					print("Sensor Error: Pressure Sensor Failure")
+					GPIO.output(11, False)
+					GPIO.output(13, False)
+					GPIO.output(15, True)
+				else: 
+					pass
+
+			elif(float_level == 7): # Float = High
+				if(pressure_level >= high_level and plumb_level >= high_level) # all three sensors agree, continuous failure not found. 
+					GPIO.output(11, False)
+					GPIO.output(13, False)
+					GPIO.output(15, False)
+				elif(pressure_level >= high_level): # Pressure Level Sensor agrees >>> Aquaplumb Error
+					print("Sensor Error: Aquaplumb Sensor Failure")
+					GPIO.output(11, False)
+					GPIO.output(13, False)
+					GPIO.output(15, False)
+				elif(plumb_level >= high_level): # Aquaplumb Sensor agrees >>> Pressure Error
+					print("Sensor Error: Pressure Sensor Failure")
+					GPIO.output(11, False)
+					GPIO.output(13, False)
+					GPIO.output(15, False)
+				else: 
+					pass
+
+			else:
+				pass
+
+	else: # No Error in continuous sensors
+		continuous_level = (pressure_level + plumb_level)/2
+		print('The Water Level in the Tank is: ', continuous_level)
+
+		if((float_level == 0 ) or (float_level == 4 ) or (float_level == 6 ) or (float_level == 7 )):   # No Errors in Float Sensors
+			#Implment Logic to determine the digital outputs ASSUMING NO ERRORS
+			if(float_level == 0 and continuous_level <= low_level + 1):	# Output "Empty" to pump controller
+				GPIO.output(11, True)
+				GPIO.output(13, True)
+				GPIO.output(15, True)
+			elif(float_level == 4 and low_level - 1 <= continuous_level <= medium_level + 1):  # Output "Low" to pump controller
+				GPIO.output(11, False)
+				GPIO.output(13, True)
+				GPIO.output(15, True)
+			elif(float_level == 6 and medium_level - 1 <= continuous_level <= high_level):  # Output "Med" to pump controller
+				GPIO.output(11, False)
+				GPIO.output(13, False)
+				GPIO.output(15, True)
+			elif(float_level == 7 and continuous_level >= high_level - 1):  # Output "High" to pump controller
+				GPIO.output(11, False)
+				GPIO.output(13, False)
+				GPIO.output(15, False)
+			else:
+				pass
+
+		else:  # Error in float sensors but not continuous sensors
+			print("Sensor Error: Float Sensor Failure")
+			print("Please in inspect Floats")
+
+			# Trust continuous sensors
+			if(continuous_level <= low_level):	# Output "Empty" to pump controller
+				GPIO.output(11, True)
+				GPIO.output(13, True)
+				GPIO.output(15, True)
+			elif(low_level <= continuous_level <= medium_level):  # Output "Low" to pump controller
+				GPIO.output(11, False)
+				GPIO.output(13, True)
+				GPIO.output(15, True)
+			elif(medium_level <= continuous_level <= high_level):  # Output "Med" to pump controller
+				GPIO.output(11, False)
+				GPIO.output(13, False)
+				GPIO.output(15, True)
+			elif(continuous_level >= high_level):  # Output "High" to pump controller
+				GPIO.output(11, False)
+				GPIO.output(13, False)
+				GPIO.output(15, False)
+			else:
+				pass
+
+
+	# Fetch and Report Tempurature level.
+		# Fetch Tempurature and Display it freeboard.io site: 
 	tempurature = fetchtemp()
 	dweepy.dweet_for(sensor_name,{'tempurature':round(data,2)})
 
@@ -160,6 +261,42 @@ while True:		# while True: creates an infinate while loop to run while the Pi is
 #*      Notes       *
 #********************
 """
+	Float Sensor truth table 
+
+  |	 Low  Med  High |  Results
+0 |	  0    0    0   |  Empty 
+1 |   0    0    1   |  Error: high float asserted only
+2 |   0    1    0   |  Error: Medium float asserted only
+3 |   0    1    1   |  Error: Med and High float asserted (check low float)
+4 |   1    0    0   |  Low
+5 |   1    0    1   |  Error: Low and Medium float asserted (check medium float)
+6 |   1    1    0   |  Medium
+7 |   1    1    1   |  High
+
+	
+	Tank Level Schematic 
+
+			48" --- 
+				 |
+				 |   High
+				 |
+	  High: 40" ---
+				 |
+				 |   Medium
+				 |
+	   Med: 20" ---
+	   			 |
+	   			 |   Low
+	   			 |
+	    Low: 3" ---
+	    	     |
+	    	     |   Empty
+	    	     |
+	    	 0" ---
+
+
+	Python Coding Notes
+
 In order to set ports to an input or output
 GPIO.setup(Port#, GPIO.IN)  // input
 GPIO.setup(Port#, GPIO.OUT) // output
@@ -171,6 +308,8 @@ GPIO.input(port#)
 
 In order to set the output state of a GPIO pin:
 GPIO.output(Port#, state)  // were state can be 0 / 1 / False / True / GPIO.LOW / GPIO.HIGH
+
+
 
 
 """
